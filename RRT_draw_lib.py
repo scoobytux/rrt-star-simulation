@@ -164,6 +164,48 @@ class Plot_RRT(Plot_base):
         self.path(Tree.path_to_goal, ls_edge=ls_ahead_path, ls_node=ls_path_node, lw=lw_path)
         self.pause(0.001)
     
+    def show_tree(self, num_iter, Tree, obstacles,  goal_coords, start_coords, color_tree=TreeColor.no):
+        
+        # clear plot
+        self.clear()
+
+        ''' draw map obstacles/world '''            
+        # prepare title
+        status_title = self.prepare_title(num_iter, Tree.total_goal_cost)
+
+        # plot map
+        if obstacles is None:
+            obstacles = Obstacles() # replace with empty obstacle
+
+        if show_map:
+            self.show_map(world_name=None, obstacles=obstacles, plot_title=status_title)
+        
+        # draw current tree
+        self.tree(Tree, color_mode=color_tree, neighbour_en=True)
+
+        # draw goal
+        self.goal(goal_coords, Tree.reach_goal, None)
+
+        # draw start 
+        self.start(start_coords)
+
+        ''' animation new node '''
+        # if rand_coordinate is not None:
+        #     self.point(rand_coordinate, ls=ls_rand_coordinates)
+        #     self.line_segment((rand_coordinate, rand_node.coords), ls=ls_ls_to_nn)
+            
+        # if rand_node is not None:
+        #     self.vision_area(rand_node.coords, Tree.radius)
+        #     self.point(rand_node.coords, ls=ls_random_node)
+        # if nearest_neighbour_node is not None:
+        #     self.point(nearest_neighbour_node.coords, ls=ls_nearest_n_node)
+        # for neighbour_node in neighbour_nodes:
+        #     self.point(neighbour_node.coords, ls=ls_neighbour_node)
+        
+        # path from root to goal
+        self.path(Tree.path_to_goal, ls_edge=ls_ahead_path, ls_node=ls_path_node, lw=lw_path)
+        self.pause(0.001)
+    
     def RRTX_animation(self, Tree=Tree, obstacles=Obstacles, robot=Robot, obstacle_nodes=[],\
                     discovered_obstacle_nodes = [], all_children= [], rrt_queue=Priority_queue,\
                     sql_nodes= [], easy_experiment=False):

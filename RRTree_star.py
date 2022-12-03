@@ -81,6 +81,7 @@ class RRTree_star(RRTree):
                 plotter.build_tree_animation(num_iter= i, Tree= self, obstacles=obstacles,  goal_coords=goal_coordinate, \
                     start_coords=self.root.coords, rand_coordinate= rand_coordinate, rand_node=new_node, 
                     neighbour_nodes=neighbour_nodes, nearest_neighbour_node=nearest_neighbour_node, color_tree=TreeColor.by_cost)
+        
 
 if __name__ == '__main__':
     ''' initial parameters '''
@@ -131,5 +132,8 @@ if __name__ == '__main__':
 
         with open('rrt_star.pickle', 'wb') as f:
             pickle.dump(RRT_star, f)
-            
+    else:
+        plotter.show_tree(num_iter=sample_size, Tree=RRT_star, obstacles=obstacles,  goal_coords=goal_coordinate, \
+                    start_coords=start_cooridinate, color_tree=TreeColor.by_cost)
+
     plotter.show()
