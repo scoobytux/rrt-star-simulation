@@ -1,5 +1,8 @@
 import numpy as np
 
+import pickle
+import sys
+
 from Tree import Tree, Node
 from RRTree import RRTree
 from RRT_draw_lib import Plot_RRT
@@ -8,6 +11,8 @@ from Robot_math_lib import *
 from RRT_user_input import menu_RRT
 from Program_config import *
 from Obstacles import Obstacles
+
+sys.setrecursionlimit(12000)
 
 class RRTree_star(RRTree):
 
@@ -37,15 +42,19 @@ class RRTree_star(RRTree):
 
         for i in range(1, self.sampling_size):
             
-            # generate random coordinate in sampling area = [min, max]
-            rand_coordinate = self.random_coordinate()
-            
-            # orient to goal sometime :))
-            if i %100 == 0 and not self.reach_goal: # bias to goal sometime
-                rand_coordinate = np.array(goal_coordinate)
+            while True:
+                # generate random coordinate in sampling area = [min, max]
+                rand_coordinate = self.random_coordinate()
+                
+                # orient to goal sometime :))
+                if i %100 == 0 and not self.reach_goal: # bias to goal sometime
+                    rand_coordinate = np.array(goal_coordinate)
 
-            # bring closer random coordinate to tree 
-            accepted_coordinate = self.bring_closer(rand_coordinate=rand_coordinate)
+                # bring closer random coordinate to tree 
+                accepted_coordinate = self.bring_closer(rand_coordinate=rand_coordinate)
+
+                if not obstacles.check_point_collision(accepted_coordinate, obstacles.obstacles_line_segments):
+                    break
 
             
             # if tree first saw given goal , instead of adding new random , add goal
@@ -68,13 +77,22 @@ class RRTree_star(RRTree):
                 self.total_goal_cost = goal_node.cost
 
             ''' for display '''
-            if show_animation:
-                plotter.build_tree_animation(num_iter= i, Tree= self, obstacles=None,  goal_coords=goal_coordinate, \
+            if i == self.sampling_size - 1:
+                plotter.build_tree_animation(num_iter= i, Tree= self, obstacles=obstacles,  goal_coords=goal_coordinate, \
                     start_coords=self.root.coords, rand_coordinate= rand_coordinate, rand_node=new_node, 
                     neighbour_nodes=neighbour_nodes, nearest_neighbour_node=nearest_neighbour_node, color_tree=TreeColor.by_cost)
 
 if __name__ == '__main__':
     ''' initial parameters '''
+    try:
+        with open('rrt_star.pickle', 'rb') as f: 
+            RRT_star = pickle.load(f)
+    except:
+        read_tree = False
+        print("Create and save the tree ...")
+    else:
+        read_tree = True
+
     # get user input
     menu_result = menu_RRT()
     # get start_cooridinate and goal_coordinate
@@ -94,7 +112,8 @@ if __name__ == '__main__':
 
     obstacles = Obstacles()
     ''' get obstacles data whether from world (if indicated) or map (by default)'''
-    #obstacles.read(world_name, map_name)
+    obstacles.read(world_name, map_name)
+    obstacles.line_segments()
 
     # find working space boundary
     x_min = min(obstacles.x_lim[0], obstacles.y_lim[0], start_cooridinate[0], goal_coordinate[0])
@@ -103,9 +122,14 @@ if __name__ == '__main__':
     y_max = max(obstacles.x_lim[1], obstacles.y_lim[1], start_cooridinate[1], goal_coordinate[1])
     random_area = ([x_min, y_min], [x_max, y_max])
 
-    ''' build tree '''
-    start_node = Node(start_cooridinate, cost=0)            # initial root node, cost to root = 0
-    RRT_star = RRTree_star(root=start_node, step_size=step_size, radius=radius, 
-                    random_area=random_area, sample_size=sample_size)
-    RRT_star.build(goal_coordinate=goal_coordinate, plotter=plotter, obstacles=obstacles, show_animation=True)
+    if not read_tree:
+        ''' build tree '''
+        start_node = Node(start_cooridinate, cost=0)            # initial root node, cost to root = 0
+        RRT_star = RRTree_star(root=start_node, step_size=step_size, radius=radius, 
+                        random_area=random_area, sample_size=sample_size)
+        RRT_star.build(goal_coordinate=goal_coordinate, plotter=plotter, obstacles=obstacles, show_animation=True)
+
+        with open('rrt_star.pickle', 'wb') as f:
+            pickle.dump(RRT_star, f)
+            
     plotter.show()
